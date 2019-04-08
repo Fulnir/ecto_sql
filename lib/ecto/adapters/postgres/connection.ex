@@ -977,8 +977,14 @@ if Code.ensure_loaded?(Postgrex) do
     defp column_type({:array, type}, opts),
       do: [column_type(type, opts), "[]"]
 
+    #
+    # For CockroachDB.
+    # [ecto_to_db(type), "(0)"] changed to [ecto_to_db(type), ""]
+    # (Postgrex.Error) ERROR 0A000 (feature_not_supported) syntax error: unimplemented: unimplemented at or near ","
+    # query: CREATE TABLE IF NOT EXISTS "schema_migrations" ("version" bigint, "inserted_at" timestamp(0), PRIMARY KEY ("version"))
+    # hint: See: https://github.com/cockroachdb/cockroach/issues/32098
     defp column_type(type, _opts) when type in ~w(time utc_datetime naive_datetime)a,
-      do: [ecto_to_db(type), "(0)"]
+      do: [ecto_to_db(type), ""]
 
     defp column_type(type, opts) when type in ~w(time_usec utc_datetime_usec naive_datetime_usec)a do
       precision = Keyword.get(opts, :precision)
